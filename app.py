@@ -1,3 +1,8 @@
+st.set_page_config(layout="wide")
+st.markdown("""<style>
+button { width: 100%; }
+</style>""", unsafe_allow_html=True)
+
 import streamlit as st
 import random
 import resend
@@ -24,6 +29,7 @@ SUPABASE_URL = st.secrets.get("SUPABASE_URL")
 SUPABASE_KEY = st.secrets.get("SUPABASE_KEY")
 
 st.write("DEBUG URL:", SUPABASE_URL)
+st.write("KEY:", SUPABASE_KEY)
 
 resend.api_key = os.getenv("RESEND_API_KEY")
 
@@ -93,6 +99,10 @@ st.markdown("""
         ### A sua melhor decisão 🚀
         """)
 if not st.session_state.user:
+
+    if st.button("⬅️ Voltar", key="btn_voltar"):
+     st.session_state.acesso_liberado = False
+    st.rerun()
 
     st.subheader("Login")
 
