@@ -112,7 +112,7 @@ if not st.session_state.acesso:
 
         st.markdown(
     """
-    <a href="https://pay.kiwify.com.br/51auU6A" target="_blank">
+    <a href="https://lastlink.com/p/CE2CB5E4C/checkout-payment/" target="_blank">
         <button style="
             background-color:#00BFFF;
             color:white;
