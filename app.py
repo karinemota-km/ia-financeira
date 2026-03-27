@@ -14,13 +14,17 @@ st.set_page_config(layout="wide")
 # 🔐 KEYS 
 # =============================
 
-
-SUPABASE_URL = ""
-
 import os
 
 OPENAI_KEY = os.getenv("OPENAI_KEY")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+import streamlit as st
+
+SUPABASE_URL = st.secrets.get("SUPABASE_URL")
+SUPABASE_KEY = st.secrets.get("SUPABASE_KEY")
+
+st.write("DEBUG URL:", SUPABASE_URL)
+
 resend.api_key = os.getenv("RESEND_API_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
