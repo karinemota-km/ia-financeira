@@ -1,42 +1,51 @@
-st.set_page_config(layout="wide")
-st.markdown("""<style>
-button { width: 100%; }
-</style>""", unsafe_allow_html=True)
-
 import streamlit as st
 import random
 import resend
-import os
 from supabase import create_client
 from openai import OpenAI
 
 # =============================
-# 🔧 CONFIGURAÇÃO DA PÁGINA
+# 🎨 CONFIG + ESTILO PREMIUM
 # =============================
 st.set_page_config(layout="wide")
 
+st.markdown("""
+<style>
+body {background-color: #0e1117;}
+h1, h2, h3, h4 {color: white;}
+.stButton>button {
+    background: linear-gradient(90deg, #ff4b2b, #ff416c);
+    color: white;
+    border-radius: 8px;
+    height: 3em;
+    width: 100%;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # =============================
-# 🔐 KEYS 
+# 🔐 SECRETS
 # =============================
+try:
+    SUPABASE_URL = st.secrets["SUPABASE_URL"]
+    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+    OPENAI_KEY = st.secrets["OPENAI_KEY"]
+    RESEND_API_KEY = st.secrets["RESEND_API_KEY"]
+except:
+    st.error("Configure os Secrets no Streamlit")
+    st.stop()
 
-import os
+resend.api_key = RESEND_API_KEY
 
-OPENAI_KEY = os.getenv("OPENAI_KEY")
-
-import streamlit as st
-
-SUPABASE_URL = st.secrets.get("SUPABASE_URL")
-SUPABASE_KEY = st.secrets.get("SUPABASE_KEY")
-
-st.write("DEBUG URL:", SUPABASE_URL)
-st.write("KEY:", SUPABASE_KEY)
-
-resend.api_key = os.getenv("RESEND_API_KEY")
-
+# =============================
+# 🔌 CONEXÕES
+# =============================
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 client = OpenAI(api_key=OPENAI_KEY)
 
-# 🔐 SESSION STATE
+# =============================
+# 🔐 SESSION
+# =============================
 if "user" not in st.session_state:
     st.session_state.user = None
 
@@ -63,30 +72,27 @@ if not st.session_state.acesso_liberado:
         st.title("💰 Vida Financeira Blindada")
 
         st.markdown("""
-        ### Você não precisa mais viver no sufoco financeiro
+        ### Pare de viver no sufoco financeiro
 
         ✔ Diagnóstico completo  
-        ✔ Plano personalizado  
-        ✔ Clareza financeira  
+        ✔ Plano estratégico  
+        ✔ Clareza total  
 
-        🔒 Acesso exclusivo para usuários
+        🔒 Acesso exclusivo
         """)
 
-        if st.button("🔥 Quero organizar minha vida agora", key="btn_pagamento"):
-            st.markdown("[PAGAR AGORA](SEU_LINK_KIWIFY)")
+        st.markdown("[🔥 QUERO ACESSAR AGORA](SEU_LINK_KIWIFY)")
 
     with col2:
         st.markdown("""
-        ### O que você vai receber:
+        ### O que você recebe:
 
-        📊 Análise financeira completa  
+        📊 Análise financeira  
         💡 Estratégia personalizada  
-        🚀 Plano de ação  
-
-        ---
+        🚀 Plano de ação imediato  
         """)
 
-        if st.button("Já tenho acesso", key="btn_ir_login"):
+        if st.button("Já tenho acesso"):
             st.session_state.acesso_liberado = True
             st.rerun()
 
@@ -95,44 +101,39 @@ if not st.session_state.acesso_liberado:
 # =============================
 # 🔐 LOGIN
 # =============================
-st.markdown("""
-        ### A sua melhor decisão 🚀
-        """)
 if not st.session_state.user:
 
-    if st.button("⬅️ Voltar", key="btn_voltar"):
-     st.session_state.acesso_liberado = False
-    st.rerun()
+    if st.button("⬅️ Voltar"):
+        st.session_state.acesso_liberado = False
+        st.rerun()
 
-    st.subheader("Login")
+    st.subheader("Acesse sua conta")
 
     email = st.text_input("Email").strip().lower()
     senha = st.text_input("Senha", type="password")
 
-    if st.button("Entrar", key="btn_login"):
+    if st.button("Entrar"):
 
         resposta = supabase.table("usuarios").select("*").execute()
         usuarios = resposta.data
 
         usuario = next((u for u in usuarios if u["email"].strip().lower() == email), None)
 
-        if usuario:
+        if usuario and usuario["senha"] == senha:
+            st.session_state.user = usuario
+            st.success("Login realizado")
+            st.rerun()
 
-            if usuario["senha"] == senha:
-                st.session_state.user = usuario
-                st.success("Login realizado")
-                st.rerun()
-
-            else:
-                st.error("Senha incorreta")
-                st.session_state.reset_mode = True
-                st.session_state.email_reset = email
+        elif usuario:
+            st.error("Senha incorreta")
+            st.session_state.reset_mode = True
+            st.session_state.email_reset = email
 
         else:
             st.error("Email não encontrado")
 
 # =============================
-# 🔑 RECUPERAÇÃO DE SENHA
+# 🔑 RECUPERAÇÃO
 # =============================
 if st.session_state.reset_mode:
 
@@ -140,7 +141,7 @@ if st.session_state.reset_mode:
 
     if st.session_state.codigo_reset is None:
 
-        if st.button("Enviar código", key="btn_enviar_codigo"):
+        if st.button("Enviar código"):
 
             codigo = str(random.randint(100000, 999999))
             st.session_state.codigo_reset = codigo
@@ -152,19 +153,18 @@ if st.session_state.reset_mode:
                     "subject": "Recuperação de senha",
                     "html": f"<h1>{codigo}</h1>"
                 })
-
                 st.success("Código enviado para o email!")
 
-            except Exception as e:
-                st.error("Erro ao enviar email")
-                st.write(e)
+            except:
+                st.warning("Modo teste ativo")
+                st.info(f"Código: {codigo}")
 
     else:
 
         codigo_digitado = st.text_input("Digite o código")
         nova_senha = st.text_input("Nova senha", type="password")
 
-        if st.button("Confirmar nova senha", key="btn_confirmar_reset"):
+        if st.button("Confirmar nova senha"):
 
             if codigo_digitado == st.session_state.codigo_reset:
 
@@ -182,14 +182,14 @@ if st.session_state.reset_mode:
                 st.error("Código inválido")
 
 # =============================
-# 🤖 ÁREA DA IA
+# 🤖 IA
 # =============================
 if st.session_state.user:
 
     col1, col2 = st.columns([6,1])
 
     with col2:
-        if st.button("🚪 Sair", key="btn_logout"):
+        if st.button("🚪 Sair"):
             st.session_state.user = None
             st.session_state.acesso_liberado = False
             st.rerun()
@@ -198,35 +198,43 @@ if st.session_state.user:
     uso = user["uso"]
     LIMITE = 5
 
-    st.write(f"Uso: {uso}/{LIMITE}")
+    st.markdown(f"### 📊 Uso: {uso}/{LIMITE}")
 
     pergunta = st.text_area("Descreva sua situação financeira:")
 
-    if st.button("Analisar", key="btn_analise"):
+    if st.button("Gerar plano financeiro"):
 
         if uso < LIMITE:
 
-            try:
-                resposta = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[
-                        {"role": "system", "content": "Você é especialista em finanças."},
-                        {"role": "user", "content": pergunta}
-                    ]
-                )
+            if not OPENAI_KEY:
+                st.warning("IA indisponível no momento")
 
-                st.write(resposta.choices[0].message.content)
+            else:
+                try:
+                    resposta = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": "Você é especialista em reeducação financeira. Responda com diagnóstico, plano e ação."
+                            },
+                            {"role": "user", "content": pergunta}
+                        ]
+                    )
 
-                novo_uso = uso + 1
+                    st.success("Plano gerado com sucesso!")
+                    st.write(resposta.choices[0].message.content)
 
-                supabase.table("usuarios").update({
-                    "uso": novo_uso
-                }).eq("id", user["id"]).execute()
+                    novo_uso = uso + 1
 
-                st.session_state.user["uso"] = novo_uso
+                    supabase.table("usuarios").update({
+                        "uso": novo_uso
+                    }).eq("id", user["id"]).execute()
 
-            except Exception as e:
-                st.error(f"Erro: {e}")
+                    st.session_state.user["uso"] = novo_uso
+
+                except Exception as e:
+                    st.error(f"Erro: {e}")
 
         else:
-            st.warning("Limite atingido")
+            st.warning("🚫 Limite atingido")
