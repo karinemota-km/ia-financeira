@@ -80,7 +80,9 @@ if not st.session_state.acesso_liberado:
 
         🔒 Acesso exclusivo
         """)
-
+        if st.button("[Já tenho acesso](SEU_LINK_KIWIFY)"):
+            st.session_state.acesso_liberado = True
+            st.rerun()    
         st.markdown("[🔥 QUERO ACESSAR AGORA](SEU_LINK_KIWIFY)")
 
     with col2:
