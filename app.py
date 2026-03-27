@@ -12,13 +12,29 @@ st.set_page_config(layout="wide")
 st.markdown("""
 <style>
 body {background-color: #0e1117;}
-h1, h2, h3 {color: white;}
+
+h1, h2, h3 {
+    color: #ffffff;
+}
+
+/* Botões padrão (suaves) */
 .stButton>button {
-    background: linear-gradient(90deg, #ff4b2b, #ff416c);
+    background-color: #1f6feb;
     color: white;
-    border-radius: 10px;
-    height: 3em;
-    width: 100%;
+    border-radius: 8px;
+    height: 2.8em;
+    border: none;
+    transition: 0.3s;
+}
+
+/* Hover */
+.stButton>button:hover {
+    background-color: #388bfd;
+}
+
+/* Text area */
+textarea {
+    border-radius: 10px !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -96,7 +112,7 @@ if not st.session_state.acesso:
 
         st.markdown(
     """
-    <a href="SEU_LINK_KIWIFY" target="_blank">
+    <a href="https://pay.kiwify.com.br/51auU6A" target="_blank">
         <button style="
             background-color:#00BFFF;
             color:white;
@@ -133,13 +149,14 @@ if not st.session_state.acesso:
 # =============================
 # LOGIN
 # =============================
-if not st.session_state.user:
+
+if st.session_state.user is None:
 
     if st.button("⬅️ Voltar", key="voltar"):
         st.session_state.acesso = False
         st.rerun()
 
-    st.subheader("Login")
+    st.subheader("Acesse sua conta")
 
     email = st.text_input("Email").lower()
     senha = st.text_input("Senha", type="password")
@@ -157,7 +174,6 @@ if not st.session_state.user:
 
                 if user and user["senha"] == senha:
                     st.session_state.user = user
-                    st.success("Login realizado")
                     st.rerun()
 
                 elif user:
@@ -168,8 +184,9 @@ if not st.session_state.user:
                 else:
                     st.error("Email não encontrado")
 
-            except:
+            except Exception as e:
                 st.error("Erro ao acessar banco")
+                st.write(e)
 
 # =============================
 # RESET
@@ -226,30 +243,40 @@ if st.session_state.reset:
 # =============================
 if st.session_state.user:
 
-    col1, col2 = st.columns([6,1])
+    st.title("💰 Seu Painel Financeiro")
 
-    with col2:
-        if st.button("Sair"):
+    col_top1, col_top2, col_top3 = st.columns([6,2,2])
+
+    with col_top2:
+        if st.button("⬅️ Voltar", key="voltar_home"):
             st.session_state.user = None
             st.session_state.acesso = False
             st.rerun()
+
+    with col_top3:
+        if st.button("🚪 Sair", key="logout"):
+            st.session_state.user = None
+            st.session_state.acesso = False
+            st.rerun()
+
+    st.markdown("---")
 
     user = st.session_state.user
     uso = user.get("uso", 0)
     LIMITE = 5
 
-    st.markdown(f"### Uso: {uso}/{LIMITE}")
+    st.markdown(f"Uso disponível: {uso}/{LIMITE}")
 
-    pergunta = st.text_area("Descreva sua situação")
+    pergunta = st.text_area("Descreva sua situação financeira")
 
-    if st.button("Gerar plano"):
+    if st.button("✨ Gerar plano financeiro", key="gerar"):
 
         if uso >= LIMITE:
             st.warning("Limite atingido")
         else:
 
             if not client:
-                st.info("IA em modo demonstração")
+                st.info("Modo demonstração ativo")
                 st.write("Organize gastos, corte excessos e priorize dívidas.")
             else:
                 try:
@@ -261,13 +288,13 @@ if st.session_state.user:
                         ]
                     )
 
-                    resposta = r.choices[0].message.content
-                    st.write(resposta)
+                    st.success("Plano gerado")
+                    st.write(r.choices[0].message.content)
 
-                except:
-                    st.warning("Erro na IA")
+                except Exception as e:
+                    st.error("Erro na IA")
+                    st.write(e)
 
-            # atualiza uso SEM quebrar
             try:
                 novo = uso + 1
                 supabase.table("usuarios").update({
