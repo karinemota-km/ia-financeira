@@ -15,7 +15,7 @@ st.set_page_config(layout="wide")
 # =============================
 
 
-SUPABASE_URL = "https://vgengeiflvxkqbtfhkxe.supabase.co"
+SUPABASE_URL = ""
 
 import os
 
